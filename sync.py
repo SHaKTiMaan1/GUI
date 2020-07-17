@@ -25,6 +25,10 @@ for row in rows:
     ls.append(row[0])
 print(ls)
 
+f = open("CCI_ID.txt","r")
+cci_id = f.read().strip()
+f.close()
+
 doc = col.find({"cci_id": f"{cci_id}"}, {
                "_id": 0, "cci_name": 0, "cci_id": 0, "cci_address": 0, "__v":0})
 for x in doc:

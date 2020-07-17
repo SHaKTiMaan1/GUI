@@ -23,6 +23,11 @@ while ch == "Y" or ch == "y":
 		break
 
 
+	f = open("PATH.txt","w+")
+	"""Code for browse directory  ... Ek button create krna hai iske liye"""
+	f.write(f{path})
+
+
 
 	# load OpenCV's Haar cascade for face detection from disk
 	detector = cv2.CascadeClassifier(
