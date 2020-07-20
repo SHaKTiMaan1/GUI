@@ -7,7 +7,7 @@ import sqlite3
 """Connection String"""
 client = pymongo.MongoClient(
     "mongodb+srv://CCI:root@cluster0.4gzmr.mongodb.net/CARE?retryWrites=true&w=majority")
-db = client["CARE"]
+db = client["Jhansi"]
 col = db["cciemployees"]
 """Getting Credentials"""
 print("Email: ",end="")
@@ -17,18 +17,91 @@ pswd = getpass("Password: ", sys.stderr)
 query = {"email": f"{email}"}
 doc = col.find(query)
 for x in doc:
-    hashpass = x["password"]
-    hashpass = hashpass.encode('utf-8')
+    hashp = x["password"]
+    hashp = hashp.encode('utf-8')
     cci_id = x["cci_id"]
 """Validating Password"""
 pswd = pswd.encode('utf-8')
-if(bcrypt.checkpw(pswd, hashpass)):
+if(bcrypt.checkpw(pswd, hashp)):
     print("Login Successful")
-    f = open("CCI_ID.txt","w+")
-    f.write(cci_id)
+    f = open("CCI.txt","w+")
+    f.write(cci_id+"\n")
     f.close()
 else:
     print("Wrong Credentials")
-    
 
-    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
