@@ -11,10 +11,14 @@ import imutils
 from imutils.video import VideoStream
 import sqlite3
 import winsound
+import pickle
 
+known_encodings = []
+known_c_ids = []
 
 conn = sqlite3.connect("child.db")
 c = conn.cursor()
+d = date.today().strftime('%d-%m-%Y')
 
 
 
@@ -60,33 +64,36 @@ def init():
     return (model, face_detector, open_eyes_detector, left_eye_detector, right_eye_detector, video_capture, images, source_resolution) 
 
 
-def process_and_encode(images):
-    # initialize the list of known encodings and known names
-    known_encodings = []
-    known_names = []
-    print("[LOG] Encoding faces...")
+# def process_and_encode(images):
+#     # initialize the list of known encodings and known c_ids
+#     known_encodings = []
+#     known_C_ids = []
+#     print("[LOG] Encoding faces...")
 
-    for image_path in tqdm(images):
-        # Load image
-        image = cv2.imread(image_path)
+#     for image_path in tqdm(images):
+#         # Load image
+#         image = cv2.imread(image_path)
 
-        # Convert it from BGR to RGB
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+#         # Convert it from BGR to RGB
+#         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
      
-        # detect face in the image and get its location (square boxes coordinates)
-        boxes = face_recognition.face_locations(image, model='hog')
+#         # detect face in the image and get its location (square boxes coordinates)
+#         boxes = face_recognition.face_locations(image, model='hog')
 
-        # Encode the face into a 128-d embeddings vector
-        encoding = face_recognition.face_encodings(image, boxes)
+#         # Encode the face into a 128-d embeddings vector
+#         encoding = face_recognition.face_encodings(image, boxes)
 
-        # the person's name is the name of the folder where the image comes from
-        name = image_path.split(os.path.sep)[-2]
+#         # the person's c_id is the name of the folder where the image comes from
+#         name = image_path.split(os.path.sep)[-2]
 
-        if len(encoding) > 0 : 
-            known_encodings.append(encoding[0])
-            known_names.append(name)
+#         if len(encoding) > 0 : 
+#             known_encodings.append(encoding[0])
+#             known_names.append(name)
 
-    return {"encodings": known_encodings, "names": known_names}
+        
+        
+
+#     return {"encodings": known_encodings, "names": known_names}
 
 
 
@@ -144,18 +151,18 @@ def detect_and_display(model, video_capture, face_detector, open_eyes_detector, 
             matches = face_recognition.compare_faces(data["encodings"], encoding)
 
             # For now we don't know the person name
-            name = "Unknown"
+            c_id = "Unknown"
 
             # If there is at least one match:
             if True in matches:
                 matchedIdxs = [i for (i, b) in enumerate(matches) if b]
                 counts = {}
                 for i in matchedIdxs:
-                    name = data["names"][i]
-                    counts[name] = counts.get(name, 0) + 1
+                    c_id = data["c_ids"][i]
+                    counts[c_id] = counts.get(c_id, 0) + 1
 
                 # determine the recognized face with the largest number of votes
-                name = max(counts, key=counts.get)
+                c_id = max(counts, key=counts.get)
 
             face = frame[y:y+h,x:x+w]
             gray_face = gray[y:y+h,x:x+w]
@@ -173,7 +180,7 @@ def detect_and_display(model, video_capture, face_detector, open_eyes_detector, 
             )
             # if open_eyes_glasses detect eyes then they are open 
             if len(open_eyes_glasses) == 2:
-                eyes_detected[name]+='1'
+                eyes_detected[c_id]+='1'
                 for (ex,ey,ew,eh) in open_eyes_glasses:
                     cv2.rectangle(face,(ex,ey),(ex+ew,ey+eh),(0,255,0),2)
             
@@ -223,10 +230,10 @@ def detect_and_display(model, video_capture, face_detector, open_eyes_detector, 
                         eye_status='0'
                         color = (0,0,255)
                     cv2.rectangle(left_face,(ex,ey),(ex+ew,ey+eh),color,2)
-                eyes_detected[name] += eye_status
+                eyes_detected[c_id] += eye_status
 
             # current date & time 
-            d = date.today().strftime('%d/%m/%Y') 
+            
             c_datetime = str(d) + ' ' + time.strftime("%H:%M:%S")
             width = source_resolution[0]
             height = source_resolution[1]
@@ -240,19 +247,19 @@ def detect_and_display(model, video_capture, face_detector, open_eyes_detector, 
             y2_hdr = int(height - (.99 * height)) # starting bottom_y  
             
             # Each time, we check if the person has blinked
-            # If yes, we display its name
-            if isBlinking(eyes_detected[name],3):
+            # If yes, we display its c_id
+            if isBlinking(eyes_detected[c_id],3):
                 cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
-                # Display name
+                # Display c_id
                 y = y - 15 if y - 15 > 15 else y + 15
-                cv2.putText(frame, name, (x, y), cv2.FONT_HERSHEY_SIMPLEX,0.75, (0, 255, 0), 2)
+                cv2.putText(frame, c_id, (x, y), cv2.FONT_HERSHEY_SIMPLEX,0.75, (0, 255, 0), 2)
                 c.execute("SELECT C_ID FROM attendance WHERE DATE = '%s' " %d)
                 flag = 0
                 for row in c.fetchall():
-                    if row[0] == name:
+                    if row[0] == c_id or c_id == "Unknown":
                         flag = 1
                 if flag != 1 : 
-                    c.execute(''' INSERT INTO attendance (DATE, C_ID, ATTEND) VALUES(?, ?, ?); ''', (d, name, "True"))
+                    c.execute(''' INSERT INTO attendance (DATE, C_ID, ATTEND) VALUES(?, ?, ?); ''', (d, c_id, "True"))
                     winsound.Beep(1000, 500)
                 conn.commit()
         return frame
@@ -265,8 +272,11 @@ if __name__ == "__main__":
 
     (model, face_detector, open_eyes_detector, left_eye_detector, right_eye_detector, video_capture, images, source_resolution) = init()
     
-    
-    data = process_and_encode(images)
+    with open('dataset_faces.dat', 'rb') as f:
+        known_encodings = pickle.load(f)
+    with open('dataset_c_ids.dat', 'rb') as f:
+	    known_c_ids = pickle.load(f)
+    data = {"encodings" : known_encodings, "c_ids" : known_c_ids}
     
     
     # f = open("faceblinkdetection/encoding.txt", "w+")
@@ -293,7 +303,21 @@ if __name__ == "__main__":
         elif key_pressed & 0xFF == ord('p'): # p=pause
             cv2.waitKey(-1)
 
-          
+    ls1 = []
+    ls2 = []
+
+    c.execute("SELECT C_ID FROM details")
+    for x in c.fetchall():
+        ls1.append(x[0])
+
+    c.execute("SELECT C_ID FROM attendance")
+    for y in c.fetchall():
+        ls2.append(y[0])
+
+    for x in ls1:
+        if x not in ls2:
+            c.execute("INSERT INTO attendance (DATE,C_ID,ATTEND) VALUES (?, ?, ?)",(d, x, "False"))
+    conn.commit()
     video_capture.stop()
     cv2.destroyAllWindows()
     print("[LOG] All done.")

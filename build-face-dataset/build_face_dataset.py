@@ -5,7 +5,11 @@ import time
 import cv2
 import os
 import sqlite3
+import pickle
+import face_recognition
 ch = "Y"
+known_encodings = []
+known_c_ids = []
 while (ch == "Y") or (ch == "y"):
 	conn = sqlite3.connect("child.db")
 	c = conn.cursor()
@@ -80,10 +84,32 @@ while (ch == "Y") or (ch == "y"):
 	# do a bit of cleanup
 	print("[INFO] {} face images stored".format(total))
 	print("[INFO] cleaning up...")
+
+	print("[LOG] Encoding images")
+	for image_path in os.listdir(path):
+		image = cv2.imread(os.path.join(path,image_path))
+		image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+		boxes = face_recognition.face_locations(image, model='hog')
+		encoding = face_recognition.face_encodings(image, boxes)
+		if len(encoding) > 0:
+			with open('dataset_faces.dat', 'rb') as f:
+				known_encodings = pickle.load(f)
+				known_encodings.append(encoding[0])
+
+			with open('dataset_faces.dat', 'wb') as f:
+				pickle.dump(known_encodings, f)
+
+			with open('dataset_c_ids.dat', 'rb') as f:
+				known_c_ids = pickle.load(f)
+				known_c_ids.append(c_id)
+
+			with open('dataset_c_ids.dat', 'wb') as f:
+				pickle.dump(known_c_ids, f)
+
 	cv2.destroyAllWindows()
 	vs.stop()
 	conn.commit()
 	print("Wanna add more? Press Y/y. Press any other key to stop")
-	ch = input().strip()
-	
+	ch = input().strip()       
+
 conn.close()

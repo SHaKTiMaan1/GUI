@@ -21,7 +21,7 @@ c.execute('''CREATE TABLE IF NOT EXISTS details
 c.execute('''CREATE TABLE IF NOT EXISTS attendance
             (DATE TEXT NOT NULL,
             C_ID TEXT NOT NULL,
-            ATTEND TEXT NOT NULL ,
+            ATTEND BOOLEAN DEFAULT "False" NOT NULL ,
             SYNCED BOOLEAN DEFAULT "False");''')
 
 c = conn.execute('''SELECT C_ID FROM details;''')

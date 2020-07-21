@@ -2,11 +2,11 @@ from tqdm import tqdm
 import os
 import cv2
 import face_recognition
-dataset = 'faces'
+dataset = 'build-face-dataset/faces'
 images = []
 for direc, _, files in tqdm(os.walk(dataset)):
     for file in files:
-        if file.endswith("jpg"):
+        if file.endswith("png"):
             images.append(os.path.join(direc, file))
 
 
@@ -43,4 +43,6 @@ def process_and_encode(images):
 data = process_and_encode(images)
 f = open("encoding.txt", "w+")
 f.write(str(data["encodings"]))
+f = open("encoding_name.txt", "w+")
+f.write(str(data["names"]))
 f.close()
