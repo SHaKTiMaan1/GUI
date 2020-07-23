@@ -1,0 +1,15 @@
+1.Child Details
+2.Attendance - a)View
+              b)Take
+3.In Out
+4.Add Dataset
+5.Sync
+
+
+
+import socket
+IPaddress=socket.gethostbyname(socket.gethostname())
+if IPaddress=="127.0.0.1":
+    print("No internet, your localhost is "+ IPaddress)
+else:
+    print("Connected, with the IP address: "+ IPaddress )
