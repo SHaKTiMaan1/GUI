@@ -1,7 +1,5 @@
 import sys
 import bcrypt
-import re
-from getpass import getpass
 import pymongo
 import sqlite3
 """Connection String"""
@@ -12,7 +10,7 @@ col = db["cciemployees"]
 """Getting Credentials"""
 print("Email: ",end="")
 email = input().strip()
-pswd = getpass("Password: ", sys.stderr)
+pswd = input().strip()
 """Searching for document with the specified CCI Id"""
 query = {"email": f"{email}"}
 doc = col.find(query)

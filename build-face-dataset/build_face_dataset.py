@@ -19,7 +19,6 @@ while (ch == "Y") or (ch == "y"):
 	val = int(input().strip())
 	c.execute(''' SELECT rowid ,C_ID FROM details WHERE SET_EXIST = "False" ''')
 	for row in c.fetchall():
-		print(row[0])
 		if val == row[0]:
 			c_id = row[1]
 			break
